@@ -2,7 +2,6 @@
 import os
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 import sys
-from random import random
 from typing import Any
 
 import numpy as np
@@ -10,42 +9,40 @@ from keras import Sequential
 from keras.layers import Embedding, Dense, LSTM
 from keras.models import load_model
 
-from src.utils.tokenizers.srt_text_tokenizer import SrtTextTokenizer
-from src.utils.tokenizers.text_tokenizer import TextTokenizer
+from src.utils.factories.tokenizer_factory import create_tokenizer
 
-DATA_LINES = 10000
+DATA_LINES = 50000
 EPOCHS = 20
-TOKENS_TO_GENERATE = 64
-TOKEN_CANDIDATES = 1
-RESUME = False
 
 if __name__ == '__main__':
+    if len(sys.argv) < 3:
+        print(f'Usage: python {sys.argv[0]} <DATASET> <RESULT_MODEL.h5>')
+        sys.exit(1)
+
     DATASET = sys.argv[1]
-    text_tokenizer: TextTokenizer = SrtTextTokenizer()
-    # Example token sequences
+    RESULT_MODEL = sys.argv[2]
+    BASE_MODEL = sys.argv[3] if len(sys.argv) > 3 else None
+
+    text_tokenizer = create_tokenizer(DATASET)
     token_sequences, token_to_index = text_tokenizer.tokenize(DATASET, DATA_LINES)
 
-    # Create vocabulary
     tokens = list(token_to_index.keys())
     tokens = sorted(tokens, key=lambda x: token_to_index[x])
     num_tokens = len(tokens)
 
-    # Convert token sequences to numerical sequences
     numerical_sequences = [[token_to_index[token] for token in sequence] for sequence in token_sequences]
 
-    # Generate training data
     X = [sequence[:-1] for sequence in numerical_sequences]
     Y = [sequence[1:] for sequence in numerical_sequences]
 
-    # Model architecture
     EMBEDDING_DIM = 300
     HIDDEN_UNITS = 256
 
-    if RESUME:
-        model: Any = load_model('trained-model-20.h5')
+    if BASE_MODEL is not None:
+        model: Any = load_model(BASE_MODEL)
 
         model.fit(np.array(X), np.array(Y), epochs=EPOCHS)
-        model.save('trained-model-40.h5')
+        model.save(RESULT_MODEL)
 
     else:
         model = Sequential([
@@ -62,24 +59,6 @@ if __name__ == '__main__':
         a = np.array(X)
         b = np.array(Y)
         model.fit(np.array(X), np.array(Y), epochs=EPOCHS)
-        model.save('trained-model-20.h5')
+        model.save(RESULT_MODEL)
 
-    # Generate new sequences
-    generated_sequence = [
-        token_to_index['お']
-    ]
-
-    for _ in range(TOKENS_TO_GENERATE):
-        input_sequence = np.array([generated_sequence])
-        predicted_token_probs = model.predict(input_sequence)
-
-        ind = np.argpartition(predicted_token_probs[0][-1], -TOKEN_CANDIDATES)[-TOKEN_CANDIDATES:]
-        selected = ind[int(random() * TOKEN_CANDIDATES)]
-
-        if selected == 1:
-            break
-
-        generated_sequence.append(selected)
-
-    generated_tokens = [tokens[token_index] for token_index in generated_sequence]
-    print('Generated Sequence:', ''.join(generated_tokens))
+    print(f'Training finished! Saved weights to {RESULT_MODEL}')

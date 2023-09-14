@@ -29,7 +29,7 @@ class SrtTextTokenizer(TextTokenizer):
 
 
     def __get_dictionary(self, lines: List[str], dict_tagger: Tagger) -> Dict[str, int]:
-        iter_count = count(2)
+        iter_count = count(3)
         result = {}
         entries = set()
 
@@ -48,8 +48,9 @@ class SrtTextTokenizer(TextTokenizer):
                 entries.add(tag)
                 result[tag] = next(iter_count)
 
-        result['<|end|>'] = 1
         result[''] = 0
+        result['<|start|>'] = 1
+        result['<|end|>'] = 2
 
         return result
 
@@ -70,9 +71,10 @@ class SrtTextTokenizer(TextTokenizer):
         max_len = max(len(token_list) for token_list in token_collection)
 
         for token_list in token_collection:
+            token_list.insert(0, '<|start|>')
             token_list.append('<|end|>')
 
-            while len(token_list) < max_len + 1:
+            while len(token_list) < max_len + 2:
                 token_list.append('')
 
         return token_collection
