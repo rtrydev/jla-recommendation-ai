@@ -12,12 +12,12 @@ from keras.models import load_model
 
 from text_tokenizer import get_tokens_from_srt
 
-DATA_LINES = 100000
+DATA_LINES = 10000
 EPOCHS = 20
 TOKENS_TO_GENERATE = 64
 TOKEN_CANDIDATES = 1
-RESUME = True
-SKIP_TRAIN = True
+RESUME = False
+SKIP_TRAIN = False
 
 if __name__ == '__main__':
     dataset = sys.argv[1]
@@ -41,10 +41,11 @@ if __name__ == '__main__':
     hidden_units = 256
 
     if RESUME:
-        model = load_model('trained-model-60.h5')
+        model = load_model('trained-model-20.h5')
 
-        model.fit(np.array(X), np.array(y), epochs=EPOCHS)
-        model.save('trained-model-60.h5')
+        if not SKIP_TRAIN:
+            model.fit(np.array(X), np.array(y), epochs=EPOCHS)
+            model.save('trained-model-40.h5')
     else:
         model = Sequential([
             Embedding(input_dim=num_tokens, output_dim=embedding_dim),
