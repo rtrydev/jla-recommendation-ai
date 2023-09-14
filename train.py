@@ -1,16 +1,17 @@
+# pylint: disable=C0413
 import os
-import sys
-
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+import sys
 from random import random
+from typing import Any
 
 import numpy as np
-
 from keras import Sequential
 from keras.layers import Embedding, Dense, LSTM
 from keras.models import load_model
 
-from text_tokenizer import get_tokens_from_srt
+from src.utils.tokenizers.srt_text_tokenizer import SrtTextTokenizer
+from src.utils.tokenizers.text_tokenizer import TextTokenizer
 
 DATA_LINES = 10000
 EPOCHS = 20
@@ -20,12 +21,13 @@ RESUME = False
 SKIP_TRAIN = False
 
 if __name__ == '__main__':
-    dataset = sys.argv[1]
+    DATASET = sys.argv[1]
+    text_tokenizer: TextTokenizer = SrtTextTokenizer()
     # Example token sequences
-    token_sequences, token_to_index = get_tokens_from_srt(dataset, DATA_LINES)
+    token_sequences, token_to_index = text_tokenizer.tokenize(DATASET, DATA_LINES)
 
     # Create vocabulary
-    tokens = [token for token in token_to_index.keys()]
+    tokens = list(token_to_index.keys())
     tokens = sorted(tokens, key=lambda x: token_to_index[x])
     num_tokens = len(tokens)
 
@@ -34,22 +36,22 @@ if __name__ == '__main__':
 
     # Generate training data
     X = [sequence[:-1] for sequence in numerical_sequences]
-    y = [sequence[1:] for sequence in numerical_sequences]
+    Y = [sequence[1:] for sequence in numerical_sequences]
 
     # Model architecture
-    embedding_dim = 300
-    hidden_units = 256
+    EMBEDDING_DIM = 300
+    HIDDEN_UNITS = 256
 
     if RESUME:
-        model = load_model('trained-model-20.h5')
+        model: Any = load_model('trained-model-20.h5')
 
         if not SKIP_TRAIN:
-            model.fit(np.array(X), np.array(y), epochs=EPOCHS)
+            model.fit(np.array(X), np.array(Y), epochs=EPOCHS)
             model.save('trained-model-40.h5')
     else:
         model = Sequential([
-            Embedding(input_dim=num_tokens, output_dim=embedding_dim),
-            LSTM(hidden_units, return_sequences=True),
+            Embedding(input_dim=num_tokens, output_dim=EMBEDDING_DIM),
+            LSTM(HIDDEN_UNITS, return_sequences=True),
             Dense(num_tokens, activation='softmax')
         ])
 
@@ -59,8 +61,8 @@ if __name__ == '__main__':
         )
         model.summary()
         a = np.array(X)
-        b = np.array(y)
-        model.fit(np.array(X), np.array(y), epochs=EPOCHS)
+        b = np.array(Y)
+        model.fit(np.array(X), np.array(Y), epochs=EPOCHS)
         model.save('trained-model-20.h5')
 
     # Generate new sequences
