@@ -13,6 +13,7 @@ from src.utils.factories.tokenizer_factory import create_tokenizer
 DATA_LINES = 50000
 TOKENS_TO_GENERATE = 1
 TOKEN_CANDIDATES = 1
+CANDIDATES_TO_DISPLAY = 10
 
 if __name__ == '__main__':
     if len(sys.argv) < 3:
@@ -52,7 +53,7 @@ if __name__ == '__main__':
 
         selected = candidate_probabilities[:TOKEN_CANDIDATES][int(random() * TOKEN_CANDIDATES)]
 
-        for candidate in candidate_probabilities[:30]:
+        for candidate in candidate_probabilities[:CANDIDATES_TO_DISPLAY]:
             print(f'candidate: {tokens[candidate["index"]]}: {candidate["probability"]}')
 
         if selected == 1:
