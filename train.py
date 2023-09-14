@@ -18,7 +18,6 @@ EPOCHS = 20
 TOKENS_TO_GENERATE = 64
 TOKEN_CANDIDATES = 1
 RESUME = False
-SKIP_TRAIN = False
 
 if __name__ == '__main__':
     DATASET = sys.argv[1]
@@ -45,9 +44,9 @@ if __name__ == '__main__':
     if RESUME:
         model: Any = load_model('trained-model-20.h5')
 
-        if not SKIP_TRAIN:
-            model.fit(np.array(X), np.array(Y), epochs=EPOCHS)
-            model.save('trained-model-40.h5')
+        model.fit(np.array(X), np.array(Y), epochs=EPOCHS)
+        model.save('trained-model-40.h5')
+
     else:
         model = Sequential([
             Embedding(input_dim=num_tokens, output_dim=EMBEDDING_DIM),
@@ -67,7 +66,7 @@ if __name__ == '__main__':
 
     # Generate new sequences
     generated_sequence = [
-        token_to_index["お"]
+        token_to_index['お']
     ]
 
     for _ in range(TOKENS_TO_GENERATE):
@@ -83,4 +82,4 @@ if __name__ == '__main__':
         generated_sequence.append(selected)
 
     generated_tokens = [tokens[token_index] for token_index in generated_sequence]
-    print("Generated Sequence:", ''.join(generated_tokens))
+    print('Generated Sequence:', ''.join(generated_tokens))
