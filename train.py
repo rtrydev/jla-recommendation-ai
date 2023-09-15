@@ -10,8 +10,9 @@ from keras.layers import Embedding, Dense, LSTM
 from keras.models import load_model
 
 from src.utils.factories.tokenizer_factory import create_tokenizer
+from src.enums.language_enum import Languages
 
-DATA_LINES = 50000
+DATA_LINES = 10000
 EPOCHS = 20
 
 if __name__ == '__main__':
@@ -24,7 +25,7 @@ if __name__ == '__main__':
     BASE_MODEL = sys.argv[3] if len(sys.argv) > 3 else None
 
     text_tokenizer = create_tokenizer(DATASET)
-    token_sequences, token_to_index = text_tokenizer.tokenize(DATASET, DATA_LINES)
+    token_sequences, token_to_index = text_tokenizer.tokenize(DATASET, DATA_LINES, Languages.JAPANESE, 0)
 
     tokens = list(token_to_index.keys())
     tokens = sorted(tokens, key=lambda x: token_to_index[x])

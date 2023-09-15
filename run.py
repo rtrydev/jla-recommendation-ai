@@ -8,12 +8,13 @@ from typing import Any
 import numpy as np
 from keras.models import load_model
 
+from src.enums.language_enum import Languages
 from src.utils.factories.tokenizer_factory import create_tokenizer
 
-DATA_LINES = 50000
-TOKENS_TO_GENERATE = 1
+DATA_LINES = 10000
+TOKENS_TO_GENERATE = 64
 TOKEN_CANDIDATES = 1
-CANDIDATES_TO_DISPLAY = 10
+CANDIDATES_TO_DISPLAY = 0
 
 if __name__ == '__main__':
     if len(sys.argv) < 3:
@@ -24,7 +25,7 @@ if __name__ == '__main__':
     MODEL = sys.argv[2]
 
     text_tokenizer = create_tokenizer(DATASET)
-    token_sequences, token_to_index = text_tokenizer.tokenize(DATASET, DATA_LINES)
+    token_sequences, token_to_index = text_tokenizer.tokenize(DATASET, DATA_LINES, Languages.JAPANESE, 0)
 
     tokens = list(token_to_index.keys())
     tokens = sorted(tokens, key=lambda x: token_to_index[x])
