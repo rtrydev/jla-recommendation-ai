@@ -1,15 +1,21 @@
-from typing import Dict, List, Tuple
+from dataclasses import asdict
+import json
+from typing import Dict, List, Set, Tuple
 from itertools import count
 
 from fugashi import Tagger # type: ignore
 
 from src.enums.language_enum import Languages
+from src.enums.token_type_enum import TokenType
+from src.models.token_data import TokenData
 from src.utils.enhancers.text_enhancer import TextEnhancer
+from src.utils.factories.asdict_factory import enum_asdict_factory
 from src.utils.tokenizers.text_tokenizer import TextTokenizer
+from src.utils.translators.kana_translator import translate_katakana
 
 
 class SrtTextTokenizer(TextTokenizer):
-    def tokenize(self, dataset_path: str, line_count: int, language: Languages, enhancement_variations: int) -> Tuple[List[List[str]], Dict[str, int]]:
+    def tokenize(self, dataset_path: str, line_count: int, language: Languages, enhancement_variations: int) -> Tuple[List[List[str]], Dict[str, TokenData]]:
         with open(dataset_path, 'r', encoding='utf8') as datasource:
             datasource_lines = datasource.readlines()
             filtered_lines = [
@@ -40,28 +46,68 @@ class SrtTextTokenizer(TextTokenizer):
 
             return self.__postprocess_tokens(token_collection, enhancement_variations), self.__get_dictionary(filtered_lines[:line_count])
 
+    def save_tokens(self, token_dict: Dict[str, TokenData], file_name: str) -> None:
+        dumped_dict = json.dumps({
+            key: asdict(value, dict_factory=enum_asdict_factory)
+            for key, value in token_dict.items()
+        })
 
-    def __get_dictionary(self, lines: List[str]) -> Dict[str, int]:
+        with open(file_name, 'wb') as dumpfile:
+            dumpfile.write(dumped_dict.encode('utf8'))
+
+    def __get_dictionary(self, lines: List[str]) -> Dict[str, TokenData]:
         iter_count = count(3)
-        result = {}
-        entries = set()
+        result: Dict[str, TokenData] = {}
+        entries: Set[str] = set()
 
         for line in lines:
-            tags = self.__tokenize_sentence(line)
+            tags = [
+                TokenData(
+                    token_id=-1,
+                    lemma_id=None,
+                    token=str(tag),
+                    infinitive=str(tag),
+                    reading=None,
+                    token_type=TokenType('meta')
+                )
+                for tag in line.replace(',', ' ,').replace('\n', '').split(' ')
+            ]
 
             for tag in tags:
                 if tag in entries:
                     continue
 
-                entries.add(tag)
-                result[tag] = next(iter_count)
+                entries.add(tag.token)
+                tag.token_id = next(iter_count)
 
-        result[''] = 0
-        result['<|start|>'] = 1
-        result['<|end|>'] = 2
+                result[tag.token] = tag
+
+        result[''] = TokenData(
+            token_id=0,
+            lemma_id=None,
+            token='',
+            infinitive=None,
+            reading=None,
+            token_type=TokenType.META
+        )
+        result['<|start|>'] = TokenData(
+            token_id=1,
+            lemma_id=None,
+            token='<|start|>',
+            infinitive=None,
+            reading=None,
+            token_type=TokenType.META
+        )
+        result['<|end|>'] = TokenData(
+            token_id=2,
+            lemma_id=None,
+            token='<|end|>',
+            infinitive=None,
+            reading=None,
+            token_type=TokenType.META
+        )
 
         return result
-
 
     def __tokenize_sentence(self, sentence: str) -> List[str]:
         return [
@@ -69,28 +115,61 @@ class SrtTextTokenizer(TextTokenizer):
             for tag in sentence.replace(',', ' ,').replace('\n', '').split(' ')
         ]
 
-
-    def __get_dictionary_jp(self, lines: List[str], dict_tagger: Tagger) -> Dict[str, int]:
+    def __get_dictionary_jp(self, lines: List[str], dict_tagger: Tagger) -> Dict[str, TokenData]:
         iter_count = count(3)
-        result = {}
-        entries = set()
+        result: Dict[str, TokenData] = {}
+        entries: Set[str] = set()
 
         for line in lines:
-            tags = self.__tokenize_sentence_jp(line, dict_tagger)
+            dict_tagger.parse(line)
+
+            tags = [
+                TokenData(
+                    token_id=-1,
+                    lemma_id=str(tag.feature.lemma_id),
+                    token=str(tag),
+                    infinitive=str(tag.feature.lemma),
+                    reading=translate_katakana(str(tag.feature.kanaBase)),
+                    token_type=TokenType('meta')
+                )
+                for tag in dict_tagger(line)
+            ]
 
             for tag in tags:
-                if tag in entries:
+                if tag.token in entries:
                     continue
 
-                entries.add(tag)
-                result[tag] = next(iter_count)
+                entries.add(tag.token)
+                tag.token_id = next(iter_count)
 
-        result[''] = 0
-        result['<|start|>'] = 1
-        result['<|end|>'] = 2
+                result[tag.token] = tag
+
+        result[''] = TokenData(
+            token_id=0,
+            lemma_id=None,
+            token='',
+            infinitive=None,
+            reading=None,
+            token_type=TokenType.META
+        )
+        result['<|start|>'] = TokenData(
+            token_id=1,
+            lemma_id=None,
+            token='<|start|>',
+            infinitive=None,
+            reading=None,
+            token_type=TokenType.META
+        )
+        result['<|end|>'] = TokenData(
+            token_id=2,
+            lemma_id=None,
+            token='<|end|>',
+            infinitive=None,
+            reading=None,
+            token_type=TokenType.META
+        )
 
         return result
-
 
     def __tokenize_sentence_jp(self, sentence: str, dict_tagger: Tagger = None) -> List[str]:
         if not dict_tagger:
@@ -102,7 +181,6 @@ class SrtTextTokenizer(TextTokenizer):
             str(tag)
             for tag in dict_tagger(sentence)
         ]
-
 
     def __postprocess_tokens(self, token_collection: List[List[str]], variations: int) -> List[List[str]]:
         max_len = max(len(token_list) for token_list in token_collection)

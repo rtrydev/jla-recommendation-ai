@@ -25,13 +25,14 @@ if __name__ == '__main__':
     BASE_MODEL = sys.argv[3] if len(sys.argv) > 3 else None
 
     text_tokenizer = create_tokenizer(DATASET)
-    token_sequences, token_to_index = text_tokenizer.tokenize(DATASET, DATA_LINES, Languages.JAPANESE, 0)
+    token_sequences, token_dict = text_tokenizer.tokenize(DATASET, DATA_LINES, Languages.JAPANESE, 3)
+    text_tokenizer.save_tokens(token_dict, f'{DATA_LINES}-{DATASET}.tagdump')
 
-    tokens = list(token_to_index.keys())
-    tokens = sorted(tokens, key=lambda x: token_to_index[x])
+    tokens = list(token_dict.keys())
+    tokens = sorted(tokens, key=lambda x: token_dict[x].token_id)
     num_tokens = len(tokens)
 
-    numerical_sequences = [[token_to_index[token] for token in sequence] for sequence in token_sequences]
+    numerical_sequences = [[token_dict[token].token_id for token in sequence] for sequence in token_sequences]
 
     X = [sequence[:-1] for sequence in numerical_sequences]
     Y = [sequence[1:] for sequence in numerical_sequences]
