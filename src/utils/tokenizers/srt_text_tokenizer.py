@@ -117,10 +117,10 @@ class SrtTextTokenizer(TextTokenizer):
             return enhanced_collection
 
         for token_list in token_collection:
-                token_list.insert(0, '<|start|>')
-                token_list.append('<|end|>')
+            token_list.insert(0, '<|start|>')
+            token_list.append('<|end|>')
 
-                while len(token_list) < max_len + 2:
-                    token_list.append('')
+            while len(token_list) < max_len + 2:
+                token_list.append('')
 
         return token_collection
