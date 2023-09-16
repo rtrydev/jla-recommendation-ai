@@ -19,4 +19,6 @@ class TextEnhancer:
             for neighbor_idx in range(idx - neighborhood_size, idx + neighborhood_size):
                 current_enhanced_line += lines[neighbor_idx]
 
+            result.append(current_enhanced_line)
+
         return result

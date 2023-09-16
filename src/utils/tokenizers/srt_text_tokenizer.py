@@ -140,13 +140,15 @@ class SrtTextTokenizer(TextTokenizer):
             ]
 
     def __postprocess_tokens(self, token_collection: List[List[str]], variations: int, neighborhood_size: int) -> List[List[str]]:
-        max_len = max(len(token_list) for token_list in token_collection)
+        enhanced_collection = None
 
         if neighborhood_size > 0:
             enhanced_collection = TextEnhancer().enhance_neighborhood(token_collection, neighborhood_size)
 
+        max_len = max(len(token_list) for token_list in (token_collection if enhanced_collection is None else enhanced_collection))
+
         if variations > 0:
-            enhanced_collection = TextEnhancer().randomize_token_sequences(token_collection, variations)
+            enhanced_collection = TextEnhancer().randomize_token_sequences(token_collection if enhanced_collection is None else enhanced_collection, variations)
 
             for token_list in enhanced_collection:
                 while len(token_list) < max_len:
