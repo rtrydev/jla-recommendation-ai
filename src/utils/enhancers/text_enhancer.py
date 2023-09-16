@@ -11,3 +11,12 @@ class TextEnhancer:
                 result.append(list(line))
 
         return result
+
+    def enhance_neighborhood(self, lines: List[List[str]], neighborhood_size: int) -> List[List[str]]:
+        result = []
+        for idx in range(neighborhood_size, len(lines) - neighborhood_size):
+            current_enhanced_line = []
+            for neighbor_idx in range(idx - neighborhood_size, idx + neighborhood_size):
+                current_enhanced_line += lines[neighbor_idx]
+
+        return result

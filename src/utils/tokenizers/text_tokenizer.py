@@ -6,7 +6,7 @@ from src.models.token_data import TokenData
 
 class TextTokenizer(ABC):
     @abstractmethod
-    def tokenize(self, dataset_path: str, line_count: int, language: Languages, enhancement_variations: int) -> Tuple[List[List[str]], Dict[str, TokenData]]:
+    def tokenize(self, dataset_path: str, line_count: int, language: Languages, enhancement_variations: int, neighborhood_size: int) -> Tuple[List[List[str]], Dict[str, TokenData]]:
         pass
 
     @abstractmethod

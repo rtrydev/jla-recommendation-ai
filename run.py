@@ -13,7 +13,7 @@ from src.enums.token_type_enum import TokenType
 
 TOKENS_TO_GENERATE = 1
 TOKEN_CANDIDATES = 1
-CANDIDATES_TO_DISPLAY = 30
+CANDIDATES_TO_DISPLAY = 100
 REQUIRE_INFINITIVE = True
 
 if __name__ == '__main__':
@@ -36,7 +36,13 @@ if __name__ == '__main__':
     model: Any = load_model(MODEL)
 
     generated_sequence = [
-        token_dict['今年'].token_id
+        token_dict['春'].token_id,
+        token_dict['夏'].token_id,
+        token_dict['秋'].token_id,
+        token_dict['冬'].token_id,
+        token_dict['雨'].token_id,
+        token_dict['風'].token_id,
+        token_dict['熱い'].token_id
     ]
 
     for _ in range(TOKENS_TO_GENERATE):
@@ -56,17 +62,17 @@ if __name__ == '__main__':
                     TokenType.PUNCTUATION,
                     TokenType.AUXILARY_VERB
                 ]
-            and tokens[idx].infinitive is not None or not REQUIRE_INFINITIVE
+            and (tokens[idx].infinitive is not None and (tokens[idx].infinitive != 'None')) or not REQUIRE_INFINITIVE
         ]
         candidate_probabilities.sort(key=lambda element: element['probability'], reverse=True)
 
         selected = candidate_probabilities[:TOKEN_CANDIDATES][int(random() * TOKEN_CANDIDATES)]
 
-        for candidate in candidate_probabilities[:CANDIDATES_TO_DISPLAY]:
+        for idx, candidate in enumerate(candidate_probabilities[:CANDIDATES_TO_DISPLAY]):
             candidate_data = tokens[candidate["index"]]
             print(
                 f'''
-                    candidate:
+                    candidate {idx + 1}:
                     token: {candidate_data.token},
                     inf: {candidate_data.infinitive},
                     reading: {candidate_data.reading},

@@ -15,7 +15,7 @@ from src.utils.translators.kana_translator import translate_katakana
 
 
 class SrtTextTokenizer(TextTokenizer):
-    def tokenize(self, dataset_path: str, line_count: int, language: Languages, enhancement_variations: int) -> Tuple[List[List[str]], Dict[str, TokenData]]:
+    def tokenize(self, dataset_path: str, line_count: int, language: Languages, enhancement_variations: int, neighborhood_size: int) -> Tuple[List[List[str]], Dict[str, TokenData]]:
         with open(dataset_path, 'r', encoding='utf8') as datasource:
             datasource_lines = datasource.readlines()
             filtered_lines = [
@@ -35,7 +35,7 @@ class SrtTextTokenizer(TextTokenizer):
                 for line in filtered_lines[:line_count]
             ]
 
-            return self.__postprocess_tokens(token_collection, enhancement_variations), self.__get_dictionary(filtered_lines[:line_count], dict_tagger)
+            return self.__postprocess_tokens(token_collection, enhancement_variations, neighborhood_size), self.__get_dictionary(filtered_lines[:line_count], dict_tagger)
         else:
             filtered_lines = ' '.join(filtered_lines).split('. ')
 
@@ -44,7 +44,7 @@ class SrtTextTokenizer(TextTokenizer):
                 for line in filtered_lines[:line_count]
             ]
 
-            return self.__postprocess_tokens(token_collection, enhancement_variations), self.__get_dictionary(filtered_lines[:line_count])
+            return self.__postprocess_tokens(token_collection, enhancement_variations, neighborhood_size), self.__get_dictionary(filtered_lines[:line_count])
 
     def save_tokens(self, token_dict: Dict[str, TokenData], file_name: str) -> None:
         dumped_dict = json.dumps({
@@ -139,8 +139,11 @@ class SrtTextTokenizer(TextTokenizer):
                 for tag in dict_tagger(line)
             ]
 
-    def __postprocess_tokens(self, token_collection: List[List[str]], variations: int) -> List[List[str]]:
+    def __postprocess_tokens(self, token_collection: List[List[str]], variations: int, neighborhood_size: int) -> List[List[str]]:
         max_len = max(len(token_list) for token_list in token_collection)
+
+        if neighborhood_size > 0:
+            enhanced_collection = TextEnhancer().enhance_neighborhood(token_collection, neighborhood_size)
 
         if variations > 0:
             enhanced_collection = TextEnhancer().randomize_token_sequences(token_collection, variations)
