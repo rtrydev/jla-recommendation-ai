@@ -13,7 +13,7 @@ from src.enums.token_type_enum import TokenType
 
 TOKENS_TO_GENERATE = 1
 TOKEN_CANDIDATES = 1
-CANDIDATES_TO_DISPLAY = 100
+CANDIDATES_TO_DISPLAY = 10
 REQUIRE_INFINITIVE = True
 
 if __name__ == '__main__':
@@ -36,13 +36,7 @@ if __name__ == '__main__':
     model: Any = load_model(MODEL)
 
     generated_sequence = [
-        token_dict['春'].token_id,
-        token_dict['夏'].token_id,
-        token_dict['秋'].token_id,
-        token_dict['冬'].token_id,
-        token_dict['雨'].token_id,
-        token_dict['風'].token_id,
-        token_dict['熱い'].token_id
+        token_dict['monitor'].token_id
     ]
 
     for _ in range(TOKENS_TO_GENERATE):
@@ -85,6 +79,3 @@ if __name__ == '__main__':
             break
 
         generated_sequence.append(selected['index'])
-
-    generated_tokens = [tokens[token_index].token for token_index in generated_sequence]
-    print('Generated Sequence:', ''.join(generated_tokens))

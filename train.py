@@ -6,14 +6,19 @@ from typing import Any
 
 import numpy as np
 from keras import Sequential
-from keras.layers import Embedding, Dense, LSTM
+from keras.layers import Embedding, Dense, LSTM, Bidirectional
 from keras.models import load_model
 
 from src.utils.factories.tokenizer_factory import create_tokenizer
 from src.enums.language_enum import Languages
 
-DATA_LINES = 20000
-EPOCHS = 20
+DATA_LINES = 5000
+EPOCHS = 50
+WORD_VARIATIONS = 5
+LINE_NEIGHBORHOOD_SIZE = 2
+
+EMBEDDING_DIM = 192
+HIDDEN_UNITS = 256
 
 if __name__ == '__main__':
     if len(sys.argv) < 3:
@@ -25,7 +30,7 @@ if __name__ == '__main__':
     BASE_MODEL = sys.argv[3] if len(sys.argv) > 3 else None
 
     text_tokenizer = create_tokenizer(DATASET)
-    token_sequences, token_dict = text_tokenizer.tokenize(DATASET, DATA_LINES, Languages.JAPANESE, 5, 2)
+    token_sequences, token_dict = text_tokenizer.tokenize(DATASET, DATA_LINES, Languages.ENGLISH, WORD_VARIATIONS, LINE_NEIGHBORHOOD_SIZE)
     text_tokenizer.save_tokens(token_dict, f'{DATA_LINES}-{DATASET}.tagdump')
 
     tokens = list(token_dict.keys())
@@ -37,9 +42,6 @@ if __name__ == '__main__':
     X = [sequence[:-1] for sequence in numerical_sequences]
     Y = [sequence[1:] for sequence in numerical_sequences]
 
-    EMBEDDING_DIM = 300
-    HIDDEN_UNITS = 256
-
     if BASE_MODEL is not None:
         model: Any = load_model(BASE_MODEL)
 
@@ -49,7 +51,7 @@ if __name__ == '__main__':
     else:
         model = Sequential([
             Embedding(input_dim=num_tokens, output_dim=EMBEDDING_DIM),
-            LSTM(HIDDEN_UNITS, return_sequences=True),
+            Bidirectional(LSTM(HIDDEN_UNITS, return_sequences=True)),
             Dense(num_tokens, activation='softmax')
         ])
 
