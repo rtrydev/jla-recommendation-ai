@@ -9,10 +9,12 @@ import numpy as np
 from keras.models import load_model
 
 from src.utils.tokenizers.token_loader import TokenLoader
+from src.enums.token_type_enum import TokenType
 
 TOKENS_TO_GENERATE = 1
 TOKEN_CANDIDATES = 1
-CANDIDATES_TO_DISPLAY = 50
+CANDIDATES_TO_DISPLAY = 30
+REQUIRE_INFINITIVE = True
 
 if __name__ == '__main__':
     if len(sys.argv) < 3:
@@ -34,7 +36,7 @@ if __name__ == '__main__':
     model: Any = load_model(MODEL)
 
     generated_sequence = [
-        token_dict['アメリカ'].token_id
+        token_dict['今年'].token_id
     ]
 
     for _ in range(TOKENS_TO_GENERATE):
@@ -47,13 +49,31 @@ if __name__ == '__main__':
                 'probability': probability
             }
             for idx, probability in enumerate(predicted_token_probs[0][-1])
+            if TokenType(tokens[idx].token_type) not in [
+                    TokenType.BLANK,
+                    TokenType.PARTICLE,
+                    TokenType.META,
+                    TokenType.PUNCTUATION,
+                    TokenType.AUXILARY_VERB
+                ]
+            and tokens[idx].infinitive is not None or not REQUIRE_INFINITIVE
         ]
         candidate_probabilities.sort(key=lambda element: element['probability'], reverse=True)
 
         selected = candidate_probabilities[:TOKEN_CANDIDATES][int(random() * TOKEN_CANDIDATES)]
 
         for candidate in candidate_probabilities[:CANDIDATES_TO_DISPLAY]:
-            print(f'candidate: {tokens[candidate["index"]]}; Probability: {candidate["probability"]}')
+            candidate_data = tokens[candidate["index"]]
+            print(
+                f'''
+                    candidate:
+                    token: {candidate_data.token},
+                    inf: {candidate_data.infinitive},
+                    reading: {candidate_data.reading},
+                    type: {TokenType(candidate_data.token_type).name};
+                    Probability: {candidate["probability"]}
+                '''
+            )
 
         if selected == 1:
             break

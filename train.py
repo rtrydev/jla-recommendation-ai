@@ -12,8 +12,8 @@ from keras.models import load_model
 from src.utils.factories.tokenizer_factory import create_tokenizer
 from src.enums.language_enum import Languages
 
-DATA_LINES = 10000
-EPOCHS = 20
+DATA_LINES = 20000
+EPOCHS = 50
 
 if __name__ == '__main__':
     if len(sys.argv) < 3:
@@ -25,7 +25,7 @@ if __name__ == '__main__':
     BASE_MODEL = sys.argv[3] if len(sys.argv) > 3 else None
 
     text_tokenizer = create_tokenizer(DATASET)
-    token_sequences, token_dict = text_tokenizer.tokenize(DATASET, DATA_LINES, Languages.JAPANESE, 3)
+    token_sequences, token_dict = text_tokenizer.tokenize(DATASET, DATA_LINES, Languages.JAPANESE, 0)
     text_tokenizer.save_tokens(token_dict, f'{DATA_LINES}-{DATASET}.tagdump')
 
     tokens = list(token_dict.keys())

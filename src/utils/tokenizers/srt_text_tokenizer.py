@@ -31,11 +31,11 @@ class SrtTextTokenizer(TextTokenizer):
             dict_tagger = Tagger('-Owakati')
 
             token_collection = [
-                self.__tokenize_sentence_jp(line, dict_tagger)
+                self.__tokenize_sentence(line, dict_tagger)
                 for line in filtered_lines[:line_count]
             ]
 
-            return self.__postprocess_tokens(token_collection, enhancement_variations), self.__get_dictionary_jp(filtered_lines[:line_count], dict_tagger)
+            return self.__postprocess_tokens(token_collection, enhancement_variations), self.__get_dictionary(filtered_lines[:line_count], dict_tagger)
         else:
             filtered_lines = ' '.join(filtered_lines).split('. ')
 
@@ -55,85 +55,13 @@ class SrtTextTokenizer(TextTokenizer):
         with open(file_name, 'wb') as dumpfile:
             dumpfile.write(dumped_dict.encode('utf8'))
 
-    def __get_dictionary(self, lines: List[str]) -> Dict[str, TokenData]:
+    def __get_dictionary(self, lines: List[str], dict_tagger: Tagger = None) -> Dict[str, TokenData]:
         iter_count = count(3)
         result: Dict[str, TokenData] = {}
         entries: Set[str] = set()
 
         for line in lines:
-            tags = [
-                TokenData(
-                    token_id=-1,
-                    lemma_id=None,
-                    token=str(tag),
-                    infinitive=str(tag),
-                    reading=None,
-                    token_type=TokenType('meta')
-                )
-                for tag in line.replace(',', ' ,').replace('\n', '').split(' ')
-            ]
-
-            for tag in tags:
-                if tag in entries:
-                    continue
-
-                entries.add(tag.token)
-                tag.token_id = next(iter_count)
-
-                result[tag.token] = tag
-
-        result[''] = TokenData(
-            token_id=0,
-            lemma_id=None,
-            token='',
-            infinitive=None,
-            reading=None,
-            token_type=TokenType.META
-        )
-        result['<|start|>'] = TokenData(
-            token_id=1,
-            lemma_id=None,
-            token='<|start|>',
-            infinitive=None,
-            reading=None,
-            token_type=TokenType.META
-        )
-        result['<|end|>'] = TokenData(
-            token_id=2,
-            lemma_id=None,
-            token='<|end|>',
-            infinitive=None,
-            reading=None,
-            token_type=TokenType.META
-        )
-
-        return result
-
-    def __tokenize_sentence(self, sentence: str) -> List[str]:
-        return [
-            str(tag)
-            for tag in sentence.replace(',', ' ,').replace('\n', '').split(' ')
-        ]
-
-    def __get_dictionary_jp(self, lines: List[str], dict_tagger: Tagger) -> Dict[str, TokenData]:
-        iter_count = count(3)
-        result: Dict[str, TokenData] = {}
-        entries: Set[str] = set()
-
-        for line in lines:
-            dict_tagger.parse(line)
-
-            tags = [
-                TokenData(
-                    token_id=-1,
-                    lemma_id=str(tag.feature.lemma_id),
-                    token=str(tag),
-                    infinitive=str(tag.feature.lemma),
-                    reading=translate_katakana(str(tag.feature.kanaBase)),
-                    token_type=TokenType('meta')
-                )
-                for tag in dict_tagger(line)
-            ]
+            tags = self.__get_tags(line, dict_tagger)
 
             for tag in tags:
                 if tag.token in entries:
@@ -171,9 +99,12 @@ class SrtTextTokenizer(TextTokenizer):
 
         return result
 
-    def __tokenize_sentence_jp(self, sentence: str, dict_tagger: Tagger = None) -> List[str]:
+    def __tokenize_sentence(self, sentence: str, dict_tagger: Tagger = None) -> List[str]:
         if not dict_tagger:
-            dict_tagger = Tagger('-Owakati')
+            return [
+                str(tag)
+                for tag in sentence.replace(',', ' ,').replace('\n', '').split(' ')
+            ]
 
         dict_tagger.parse(sentence)
 
@@ -181,6 +112,32 @@ class SrtTextTokenizer(TextTokenizer):
             str(tag)
             for tag in dict_tagger(sentence)
         ]
+
+    def __get_tags(self, line: str, dict_tagger: Tagger = None) -> List[TokenData]:
+        if not dict_tagger:
+            return [
+                TokenData(
+                    token_id=-1,
+                    lemma_id=None,
+                    token=str(tag),
+                    infinitive=str(tag),
+                    reading=None,
+                    token_type=TokenType('')
+                )
+                for tag in line.replace(',', ' ,').replace('\n', '').split(' ')
+            ]
+        else:
+            return [
+                TokenData(
+                    token_id=-1,
+                    lemma_id=str(tag.feature.lemma_id),
+                    token=str(tag),
+                    infinitive=str(tag.feature.lemma),
+                    reading=translate_katakana(str(tag.feature.kanaBase)),
+                    token_type=TokenType(tag.feature.pos1)
+                )
+                for tag in dict_tagger(line)
+            ]
 
     def __postprocess_tokens(self, token_collection: List[List[str]], variations: int) -> List[List[str]]:
         max_len = max(len(token_list) for token_list in token_collection)
