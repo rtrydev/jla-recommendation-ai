@@ -6,19 +6,19 @@ from typing import Any
 
 import numpy as np
 from keras import Sequential
-from keras.layers import Embedding, Dense, LSTM, Bidirectional
+from keras.layers import Embedding, Dense, LSTM
 from keras.models import load_model
 
 from src.utils.factories.tokenizer_factory import create_tokenizer
 from src.enums.language_enum import Languages
 
-DATA_LINES = 5000
-EPOCHS = 50
-WORD_VARIATIONS = 5
-LINE_NEIGHBORHOOD_SIZE = 2
+DATA_LINES = 100000
+EPOCHS = 30
+WORD_VARIATIONS = 0
+LINE_NEIGHBORHOOD_SIZE = 0
 
-EMBEDDING_DIM = 192
-HIDDEN_UNITS = 256
+EMBEDDING_DIM = 384
+HIDDEN_UNITS = 512
 
 if __name__ == '__main__':
     if len(sys.argv) < 3:
@@ -30,8 +30,8 @@ if __name__ == '__main__':
     BASE_MODEL = sys.argv[3] if len(sys.argv) > 3 else None
 
     text_tokenizer = create_tokenizer(DATASET)
-    token_sequences, token_dict = text_tokenizer.tokenize(DATASET, DATA_LINES, Languages.ENGLISH, WORD_VARIATIONS, LINE_NEIGHBORHOOD_SIZE)
-    text_tokenizer.save_tokens(token_dict, f'{DATA_LINES}-{DATASET}.tagdump')
+    token_sequences, token_dict = text_tokenizer.tokenize(DATASET, DATA_LINES, Languages.JAPANESE, WORD_VARIATIONS, LINE_NEIGHBORHOOD_SIZE)
+    text_tokenizer.save_tokens(token_dict, f'{DATA_LINES or len(token_sequences)}-{DATASET}.tagdump')
 
     tokens = list(token_dict.keys())
     tokens = sorted(tokens, key=lambda x: token_dict[x].token_id)
@@ -51,7 +51,8 @@ if __name__ == '__main__':
     else:
         model = Sequential([
             Embedding(input_dim=num_tokens, output_dim=EMBEDDING_DIM),
-            Bidirectional(LSTM(HIDDEN_UNITS, return_sequences=True)),
+            LSTM(HIDDEN_UNITS, return_sequences=True),
+            LSTM(HIDDEN_UNITS, return_sequences=True),
             Dense(num_tokens, activation='softmax')
         ])
 

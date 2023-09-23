@@ -21,7 +21,7 @@ class SrtTextTokenizer(TextTokenizer):
             filtered_lines = [
                 line
                 for line in datasource_lines
-                if len(line) > 10
+                if len(line) > 4
                 and not line.startswith('http')
                 and not line.endswith('.ja\n')
                 and not '-->' in line
@@ -32,19 +32,19 @@ class SrtTextTokenizer(TextTokenizer):
 
             token_collection = [
                 self.__tokenize_sentence(line, dict_tagger)
-                for line in filtered_lines[:line_count]
+                for line in (filtered_lines[:line_count] if line_count else filtered_lines)
             ]
 
-            return self.__postprocess_tokens(token_collection, enhancement_variations, neighborhood_size), self.__get_dictionary(filtered_lines[:line_count], dict_tagger)
+            return self.__postprocess_tokens(token_collection, enhancement_variations, neighborhood_size), self.__get_dictionary((filtered_lines[:line_count] if line_count else filtered_lines), dict_tagger)
         else:
             filtered_lines = ' '.join(filtered_lines).split('. ')
 
             token_collection = [
                 self.__tokenize_sentence(line)
-                for line in filtered_lines[:line_count]
+                for line in (filtered_lines[:line_count] if line_count else filtered_lines)
             ]
 
-            return self.__postprocess_tokens(token_collection, enhancement_variations, neighborhood_size), self.__get_dictionary(filtered_lines[:line_count])
+            return self.__postprocess_tokens(token_collection, enhancement_variations, neighborhood_size), self.__get_dictionary((filtered_lines[:line_count] if line_count else filtered_lines))
 
     def save_tokens(self, token_dict: Dict[str, TokenData], file_name: str) -> None:
         dumped_dict = json.dumps({

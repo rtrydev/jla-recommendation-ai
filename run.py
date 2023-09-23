@@ -36,7 +36,7 @@ if __name__ == '__main__':
     model: Any = load_model(MODEL)
 
     generated_sequence = [
-        token_dict['monitor'].token_id
+        token_dict['配信'].token_id
     ]
 
     for _ in range(TOKENS_TO_GENERATE):
